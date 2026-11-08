@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>消费预言机 · 7天后见</title>
+<style>
+/* ============ tokens ============ */
+:root{
+  --paper:#F6F1E4; --ink:#151515; --purple:#6C3BD1; --purple-d:#4B2694;
+  --neon:#C8F31D; --red:#D62828; --yellow:#FFD400; --gray:#8A857A;
+  --card:#FFFDF6; --serif:"Songti SC","STSong","SimSun",serif;
+  --din:"Bahnschrift","DIN Alternate","Consolas",monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:#111114;color:var(--ink);
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+}
+body::before{content:'';position:fixed;inset:0;
+  background:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:36px 36px;pointer-events:none}
+/* ============ phone shell ============ */
+.phone{width:390px;height:844px;background:var(--paper);border-radius:46px;
+  border:10px solid #000;box-shadow:0 34px 90px rgba(0,0,0,.65),0 0 0 1px #333;
+  position:relative;overflow:hidden;flex:none}
+@media(max-width:480px),(max-height:900px){
+  body{align-items:stretch}
+  .phone{width:100vw;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none}
+}
+.statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;font-family:var(--din);font-size:13px;font-weight:700;
+  background:var(--paper);position:relative;z-index:5}
+.statusbar .brand{font-family:var(--serif);letter-spacing:1px;font-size:12px;color:var(--ink)}
+.screens{position:absolute;top:44px;bottom:62px;left:0;right:0}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;display:none;
+  padding:14px 15px 26px;background:var(--paper);
+  background-image:radial-gradient(rgba(21,21,21,.05) 1px,transparent 1px);background-size:9px 9px}
+.screen.active{display:block;animation:slidein .24s ease}
+@keyframes slidein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ============ tabbar ============ */
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:62px;background:var(--card);
+  border-top:2px solid var(--ink);display:flex;z-index:6}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:10.5px;color:var(--gray);cursor:pointer;user-select:none}
+.tab .ico{font-size:20px;line-height:1}
+.tab.on{color:var(--ink);font-weight:700}
+.tab.on .ico{filter:drop-shadow(2px 2px 0 rgba(108,59,209,.35))}
+.tab.on::after{content:'';width:22px;height:4px;background:var(--purple);border-radius:2px;margin-top:1px}
+/* ============ atoms ============ */
+.h1{font-family:var(--serif);font-size:25px;line-height:1.3;letter-spacing:1px}
+.h2{font-family:var(--serif);font-size:17px;letter-spacing:.5px}
+.num{font-family:var(--din);font-weight:700}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border:1.5px solid var(--ink);
+  border-radius:20px;background:#fff;letter-spacing:.5px;vertical-align:middle}
+.tag.pu{background:var(--purple);color:#fff;border-color:var(--purple-d)}
+.tag.rd{background:var(--red);color:#fff;border-color:var(--ink)}
+.tag.ne{background:var(--neon)}
+.tag.ye{background:var(--yellow)}
+.note{font-size:10.5px;color:var(--gray);line-height:1.6}
+.btn{display:block;width:100%;border:2px solid var(--ink);border-radius:12px;background:var(--card);
+  padding:13px 16px;font-size:16px;font-weight:700;color:var(--ink);cursor:pointer;text-align:center;
+  box-shadow:4px 4px 0 var(--ink);transition:transform .12s,box-shadow .12s;user-select:none}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn.pu{background:var(--purple);color:#fff}
+.btn.rd{background:var(--red);color:#fff}
+.btn.ne{background:var(--neon)}
+.btn.ye{background:var(--yellow)}
+.btn.sm{padding:9px 12px;font-size:13.5px;box-shadow:3px 3px 0 var(--ink);border-radius:10px}
+.btn.ghost{background:transparent;box-shadow:none;border-style:dashed;color:var(--gray);font-weight:600}
+.btn.ghost:active{transform:none}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.chip{display:inline-block;padding:7px 12px;border:1.5px solid var(--ink);border-radius:20px;
+  background:#fff;font-size:12.5px;margin:0 8px 8px 0;cursor:pointer;user-select:none}
+.chip.on{background:var(--purple);color:#fff;border-color:var(--purple-d)}
+.chip.ne.on{background:var(--neon);color:var(--ink);border-color:var(--ink)}
+.ticket{position:relative;background:var(--card);border:2px solid var(--ink);border-radius:14px;
+  box-shadow:5px 5px 0 var(--ink);padding:16px}
+.ticket.cut::before,.ticket.cut::after{content:'';position:absolute;width:18px;height:18px;
+  border-radius:50%;background:var(--paper);border:2px solid var(--ink);top:50%;margin-top:-11px}
+.ticket.cut::before{left:-12px}.ticket.cut::after{right:-12px}
+.hazard{height:11px;border:1.5px solid var(--ink);
+  background:repeating-linear-gradient(45deg,var(--yellow) 0 11px,var(--ink) 11px 22px)}
+.divider{border-top:2px dashed rgba(21,21,21,.35);margin:13px 0}
+.row{display:flex;align-items:center;gap:8px}
+.bar{height:14px;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden;display:flex;background:#fff}
+.bar i{display:block;height:100%}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;letter-spacing:.5px}
+.field input,.field textarea{width:100%;border:2px solid var(--ink);border-radius:10px;background:#fff;
+  padding:11px 12px;font-size:15.5px;font-family:inherit;outline:none}
+.field input:focus,.field textarea:focus{box-shadow:3px 3px 0 var(--purple)}
+.backbtn{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:14px;cursor:pointer;
+  border:2px solid var(--ink);background:#fff;border-radius:20px;padding:5px 13px;box-shadow:2px 2px 0 var(--ink);
+  margin-bottom:12px;user-select:none}
+.stamp{width:88px;height:88px;border:3.5px solid var(--red);border-radius:50%;color:var(--red);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  transform:rotate(-13deg);position:relative;font-family:var(--serif);flex:none}
+.stamp::after{content:'';position:absolute;inset:5px;border:1.5px solid var(--red);border-radius:50%}
+.stamp b{font-size:21px;letter-spacing:3px;font-weight:900}
+.stamp i{font-size:8.5px;font-style:normal;letter-spacing:1px;opacity:.85}
+.stamp.pu{border-color:var(--purple);color:var(--purple)}
+.stamp.pu::after{border-color:var(--purple)}
+.stamp.ink{border-color:var(--ink);color:var(--ink)}
+.stamp.ink::after{border-color:var(--ink)}
+.stampdrop{animation:stampdrop .5s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes stampdrop{0%{transform:rotate(-13deg) scale(2.6);opacity:0}60%{opacity:1}100%{transform:rotate(-13deg) scale(1)}}
+.marquee{overflow:hidden;white-space:nowrap;border:1.5px solid var(--ink);border-radius:8px;
+  background:#fff;font-size:11px;padding:5px 0}
+.marquee span{display:inline-block;padding-left:100%;animation:mq 14s linear infinite;font-family:var(--din)}
+@keyframes mq{to{transform:translateX(-100%)}}
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.empty{border:2px dashed var(--gray);border-radius:14px;padding:26px 16px;text-align:center;color:var(--gray)}
+.empty .big{font-size:34px;margin-bottom:8px}
+/* ============ tab1 急救站 ============ */
+.bigaid{margin:18px 0 14px;text-align:center}
+.bigaid .btn{padding:26px 16px;font-size:23px;letter-spacing:2px;border-radius:18px}
+.aidstats{display:flex;gap:10px;margin-bottom:14px}
+.aidstats .ticket{flex:1;text-align:center;padding:13px 6px}
+.aidstats .v{font-family:var(--din);font-size:22px;font-weight:700}
+.weekbar{display:flex;gap:6px}
+.weekbar .d{flex:1;text-align:center;border:1.5px solid var(--ink);border-radius:9px;background:#fff;padding:7px 0 6px;position:relative}
+.weekbar .d.today{box-shadow:2px 2px 0 var(--purple);border-color:var(--purple)}
+.weekbar .d b{display:block;font-size:10px;color:var(--gray);font-weight:600}
+.weekbar .d .dot{width:22px;height:22px;margin:3px auto 0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+.dot.hold{background:var(--neon)}.dot.bought{background:var(--red);color:#fff}.dot.both{background:linear-gradient(135deg,var(--neon) 49%,var(--red) 51%);color:#fff}
+/* ============ tab2 预言机大厅 ============ */
+.pred-item{display:flex;gap:11px;align-items:stretch;margin-bottom:11px;cursor:pointer}
+.pred-item .face{width:52px;flex:none;border:2px solid var(--ink);border-radius:12px;background:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:3px 3px 0 var(--ink)}
+.pred-item .body{flex:1;padding:11px 12px}
+.pred-item .t{font-weight:800;font-size:14.5px;display:flex;justify-content:space-between;gap:6px;align-items:baseline}
+.pred-item .p{font-family:var(--din);color:var(--purple);font-size:13px}
+.pred-item .sub{font-size:11px;color:var(--gray);margin-top:4px;display:flex;justify-content:space-between;gap:6px}
+.cd{font-family:var(--din);font-weight:700;color:var(--red)}
+/* ============ detail ============ */
+.bigcd{font-family:var(--din);font-size:34px;font-weight:800;text-align:center;color:var(--purple);letter-spacing:1px}
+.voteline{display:flex;align-items:center;gap:9px;border:1.5px solid var(--ink);border-radius:11px;
+  background:#fff;padding:9px 11px;margin-bottom:8px}
+.voteline .f{font-size:20px}
+.voteline .who{font-weight:700;font-size:13px;min-width:44px}
+.voteline .say{flex:1;font-size:12px;color:#444}
+.voteline .vtag{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:6px;flex:none}
+.v0{background:#ffe3e3;color:var(--red)}.v1{background:#e6f9c8;color:#3c7a00}.v2{background:#eee9fb;color:var(--purple)}
+/* ============ aid flow ============ */
+.breathwrap{margin:24px auto 8px;width:216px;height:216px;border-radius:50%;position:relative;
+  background:conic-gradient(var(--neon) calc(var(--p)*1%),#e6e0d2 0);display:flex;align-items:center;justify-content:center}
+.breathwrap::before{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--paper);border:2px solid var(--ink)}
+.breathball{width:150px;height:150px;border-radius:50%;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%,#9b73e8,var(--purple) 72%);color:#fff;box-shadow:0 10px 26px rgba(108,59,209,.5)}
+.breathball b{font-size:52px;font-family:var(--din)}
+.breathball i{font-style:normal;font-size:12px;letter-spacing:3px;opacity:.9}
+.convert .cbox{border:2px solid var(--ink);border-radius:12px;background:#fff;padding:12px 14px;margin-bottom:10px;
+  display:flex;justify-content:space-between;align-items:baseline;box-shadow:3px 3px 0 rgba(21,21,21,.15)}
+.convert .cbox .k{font-size:12px;color:var(--gray);font-weight:700}
+.convert .cbox .v{font-family:var(--din);font-size:20px;font-weight:800;color:var(--purple)}
+.zacopy{border-left:4px solid var(--red);background:#fff;padding:10px 12px;font-size:13.5px;line-height:1.7;border-radius:0 10px 10px 0}
+/* ============ reveal ============ */
+.stage-r{background:linear-gradient(180deg,var(--purple-d),var(--purple));border:2px solid var(--ink);
+  border-radius:14px;padding:22px 16px 18px;text-align:center;color:#fff;position:relative;overflow:hidden;box-shadow:5px 5px 0 var(--ink)}
+.stage-r .vtitle{font-family:var(--serif);font-size:40px;letter-spacing:6px;text-shadow:3px 3px 0 rgba(0,0,0,.35)}
+.stage-r .vline{font-size:13px;opacity:.95;margin-top:8px;line-height:1.7}
+.hero-choices{display:flex;gap:10px;margin:10px 0}
+.hero{flex:1;border:2px solid var(--ink);border-radius:12px;background:#fff;padding:13px 6px;text-align:center;
+  cursor:pointer;box-shadow:3px 3px 0 var(--ink);user-select:none}
+.hero.on{background:var(--purple);color:#fff}
+.hero .e{font-size:24px}.hero .t{font-size:12.5px;font-weight:700;margin-top:4px}
+/* ============ cards for share ============ */
+.share-card{background:var(--card);border:2.5px solid var(--ink);border-radius:16px;overflow:hidden;
+  box-shadow:6px 6px 0 var(--ink)}
+.share-card .band{padding:10px 16px;display:flex;justify-content:space-between;align-items:center;color:#fff}
+.share-card .band .bn{font-family:var(--serif);font-size:15px;letter-spacing:2px;font-weight:900}
+.share-card .band .be{font-family:var(--din);font-size:10px;letter-spacing:2px;opacity:.85}
+.share-card .cbody{padding:15px 16px}
+.sc-item{font-family:var(--serif);font-size:21px;font-weight:900;line-height:1.4}
+.sc-price{font-family:var(--din);font-size:34px;font-weight:800;color:var(--purple)}
+.sc-quote{border-left:4px solid var(--neon);background:#fff;border-radius:0 9px 9px 0;
+  padding:9px 11px;font-size:12.5px;color:#333;margin-top:10px;line-height:1.6}
+.opts3{display:flex;gap:8px;margin-top:12px}
+.opts3 .o{flex:1;border:1.5px solid var(--ink);border-radius:10px;padding:8px 4px;text-align:center;background:#fff}
+.opts3 .o b{display:block;font-size:12px}
+.opts3 .o .n{font-family:var(--din);font-weight:800;color:var(--red)}
+.sc-foot{border-top:2px dashed rgba(21,21,21,.3);padding:9px 16px;display:flex;justify-content:space-between;align-items:center}
+.sc-foot .l{font-size:9.5px;color:var(--gray);line-height:1.5}
+.barcode{display:flex;gap:1.5px;align-items:stretch;height:26px}
+.barcode i{width:2px;background:var(--ink)}
+.barcode i.w{width:4px}
+/* ============ ring ============ */
+.ring{width:104px;height:104px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex:none}
+.ring::before{content:'';position:absolute;inset:10px;border-radius:50%;background:var(--card);border:2px solid var(--ink)}
+.ring .rv{position:relative;z-index:1;text-align:center}
+.ring .rv b{font-family:var(--din);font-size:24px}
+.ring .rv i{display:block;font-style:normal;font-size:9px;color:var(--gray)}
+/* ============ modal / export ============ */
+.modal{position:absolute;inset:0;background:rgba(12,10,20,.72);z-index:20;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal .mbox{background:var(--paper);border:2.5px solid var(--ink);border-radius:16px;max-height:100%;
+  overflow-y:auto;padding:16px;width:100%;box-shadow:6px 6px 0 #000}
+.modal img{width:100%;border:2px solid var(--ink);border-radius:10px;display:block;background:#fff}
+/* ============ misc ============ */
+.section-t{display:flex;align-items:baseline;justify-content:space-between;margin:16px 0 9px}
+.section-t .h2::before{content:'■ ';color:var(--purple);font-size:11px}
+.toast{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:#fff;
+  font-size:12.5px;padding:9px 16px;border-radius:22px;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none;
+  max-width:86%;text-align:center}
+.toast.show{opacity:.96}
+.curdiv{position:absolute;inset:0;z-index:12;background:var(--purple);transform:translateX(101%);pointer-events:none}
+.curdiv.run{animation:cur .62s ease both}
+@keyframes cur{0%{transform:translateX(101%)}45%{transform:translateX(0)}100%{transform:translateX(-101%)}}
+.mini-stats{display:flex;gap:9px}
+.mini-stats .ms{flex:1;border:1.5px solid var(--ink);border-radius:11px;background:#fff;text-align:center;padding:9px 4px}
+.mini-stats .ms b{font-family:var(--din);font-size:18px;display:block}
+.mini-stats .ms i{font-style:normal;font-size:10px;color:var(--gray)}
+</style>
+</head>
+<body>
+<div class="phone" id="phone">
+  <div class="statusbar"><span class="num">9:41</span><span class="brand">🔮 ORACLE · 7</span><span>📶 <span class="num">87</span>%</span></div>
+  <div class="screens">
+    <section class="screen" id="s-aid"></section>
+    <section class="screen" id="s-hall"></section>
+    <section class="screen" id="s-me"></section>
+    <section class="screen" id="s-aidflow"></section>
+    <section class="screen" id="s-aidcard"></section>
+    <section class="screen" id="s-create"></section>
+    <section class="screen" id="s-card"></section>
+    <section class="screen" id="s-vote"></section>
+    <section class="screen" id="s-detail"></section>
+    <section class="screen" id="s-reveal"></section>
+  </div>
+  <nav class="tabbar" id="tabbar">
+    <div class="tab on" data-tab="s-aid"><span class="ico">🚑</span>急救站</div>
+    <div class="tab" data-tab="s-hall"><span class="ico">🔮</span>预言机</div>
+    <div class="tab" data-tab="s-me"><span class="ico">🏅</span>预言家</div>
+  </nav>
+  <div class="toast" id="toast"></div>
+  <div id="modal-root"></div>
+  <div class="curdiv" id="curdiv"></div>
+</div>
+<script>
+'use strict';
+window.__errors=[];window.onerror=function(m,s,l){window.__errors.push(String(m)+'@'+l);};
+window.addEventListener('unhandledrejection',function(e){window.__errors.push('promise:'+e.reason);});
+
+/* ================= brand & data ================= */
+var BRAND={name:'消费预言机',en:'ORACLE OF REGRET',sub:'7 天后见',
+  tagline:'你的下一次冲动消费,让朋友来预言',
+  disc:'仅供娱乐,不构成任何建议'};
+
+var CHIPS=['说能缓解疲劳,但我已经有 3 个了','双 11 不买就亏了','最近太累了,奖励一下自己','这价格真的很少见','下次就不一定有了','别人都有了'];
+var SASS=['你上一次也是这么说的','你的退货记录不会说谎','它在吃灰方面很有天赋','钱没了可以再赚,快乐没了就真没了','7 天后的你正在找退货入口','我预言你连运费险都用得上'];
+var FACES=[{n:'老赵',e:'🐻'},{n:'阿May',e:'🧣'},{n:'Kiki',e:'🌟'},{n:'小雨',e:'🌿'},{n:'表姐',e:'🦊'},{n:'小北',e:'🐧'}];
+var SENS=['去死','傻','蠢','废','滚','垃圾'];
+
+var KEY='oracle_prophet_v1';
+function seedA(){var t=Date.now();
+  return{id:'NO.'+String(t).slice(-6),item:'筋膜枪 · 某网红同款',price:399,
+  reason:'说能缓解肩颈,但我已经有 3 个按摩仪了',mine:0,createdAt:t-86400e3*8,
+  deadline:t-86400e3*1,ffwd:false,status:'done',demo:true,
+  votes:[{name:'老赵',face:'🐻',choice:0,reason:'你上一次也是这么说的'},
+         {name:'Kiki',face:'🌟',choice:0,reason:'你的退货记录不会说谎'},
+         {name:'小雨',face:'🌿',choice:1,reason:'钱没了可以再赚,快乐没了就真没了'},
+         {name:'表姐',face:'🦊',choice:2,reason:'你根本不会买,你在等人拦你'}],
+  result:{bought:true,regret:true}};}
+function seedB(){var t=Date.now();
+  return{id:'NO.'+String(t-1).slice(-6),item:'盲盒同好会 · 隐藏款',price:219,
+  reason:'最后一只,错过就不再有了',mine:0,createdAt:t-86400e3*1,
+  deadline:t+86400e3*6,ffwd:false,status:'open',demo:true,
+  votes:[{name:'阿May',face:'🧣',choice:0,reason:'它在吃灰方面很有天赋'},
+         {name:'小北',face:'🐧',choice:1,reason:'喜欢就买,开心就好'}],
+  result:null};}
+function fresh(){return{settings:{salary:8000,tea:15,rentDay:100},
+  aid:{saved:0,hold:0,bought:0,streak:0,last:'',today:{date:'',amt:0},week:{}},
+  preds:[seedA(),seedB()],seeded:true};}
+function saveState(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function loadState(){try{var r=localStorage.getItem(KEY);if(r)return JSON.parse(r);}catch(e){}
+  var s=fresh();try{localStorage.setItem(KEY,JSON.stringify(s));}catch(e){}return s;}
+var state=loadState();
+
+/* ================= utils ================= */
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function clean(s){SENS.forEach(function(w){s=s.split(w).join('※');});return s;}
+function money(n){return '¥'+Math.round(n).toLocaleString('zh-CN');}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function weekKey(){var d=new Date().getDay();return d===0?7:d;}
+function fmtDate(ts){var d=new Date(ts);return (d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function cdText(deadline){var ms=deadline-Date.now();
+  if(ms<=0)return '已到开奖时间';
+  var h=Math.floor(ms/3600e3),d=Math.floor(h/24),h2=h%24,m=Math.floor(ms%3600e3/60e3);
+  if(d>=1)return '剩 '+d+' 天 '+h2+' 时';
+  if(h2>=1)return '剩 '+h2+' 时 '+m+' 分';
+  return '剩 '+m+' 分钟';}
+function toast(t){var el=$('#toast');el.textContent=t;el.classList.add('show');
+  clearTimeout(toast._t);toast._t=setTimeout(function(){el.classList.remove('show');},1900);}
+function choiceTag(c){return c===0?'会后悔':(c===1?'不会后悔':'根本不会买');}
+function choiceCls(c){return 'v'+c;}
+function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+
+/* ================= router ================= */
+var TABS=['s-aid','s-hall','s-me'];
+var FLOWS=['s-aidflow','s-aidcard','s-create','s-card','s-vote','s-detail','s-reveal'];
+var current='s-aid';
+function go(id,fn){
+  $('#curdiv').classList.remove('run');void $('#curdiv').offsetWidth;$('#curdiv').classList.add('run');
+  setTimeout(function(){
+    $$('.screen').forEach(function(s){s.classList.remove('active');});
+    current=id;$('#'+id).classList.add('active');$('#'+id).scrollTop=0;
+    $('#tabbar').style.display=FLOWS.indexOf(id)>=0?'none':'flex';
+    $$('.tab').forEach(function(t){t.classList.toggle('on',t.getAttribute('data-tab')===id);});
+    if(fn)fn();
+  },180);
+}
+var RENDER={};
+function rerender(){if(RENDER[current])RENDER[current]();}
+
+/* ================= tab1 急救站 ================= */
+function aidTodaySaved(){var a=state.aid;return a.today&&a.today.date===todayStr()?a.today.amt:0;}
+function touchStreak(){var a=state.aid,t=todayStr();
+  if(a.last!==t){a.streak=(a.last===yesterdayStr())?a.streak+1:1;a.last=t;}
+}
+function yesterdayStr(){var d=new Date(Date.now()-86400e3);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function weekRecord(){var a=state.aid,k=String(weekKey());
+  if(!a.week[k])a.week[k]={amt:0,hold:0,bought:0};return a.week[k];}
+
+RENDER['s-aid']=function(){var a=state.aid,tk=String(weekKey());
+  var html=''
+  +'<div class="hazard"></div>'
+  +'<div style="margin:14px 0 4px" class="row"><span class="tag pu">模块 · 冲动急救</span><span class="tag">60 秒自救</span></div>'
+  +'<div class="h1" style="margin-top:8px">忍不住的时候,<br>先按一下急救。</div>'
+  +'<div class="note" style="margin-top:6px">呼吸 6 秒 → 清醒换算 → 三个出口。救不回来,就让朋友预言你 7 天后会不会后悔。</div>'
+  +'<div class="bigaid"><div class="btn rd" data-act="aidStart">🚨 我忍不住了</div></div>'
+  +'<div class="aidstats">'
+  +  '<div class="ticket"><div class="v" style="color:var(--red)">'+money(aidTodaySaved())+'</div><div class="note">今日已救回</div></div>'
+  +  '<div class="ticket"><div class="v" style="color:var(--purple)">'+a.streak+'</div><div class="note">连续急救 · 天</div></div>'
+  +  '<div class="ticket"><div class="v">'+money(a.saved)+'</div><div class="note">累计救回</div></div>'
+  +'</div>'
+  +'<div class="section-t"><span class="h2">本周急救记录</span><span class="note">绿=按住 红=买了</span></div>'
+  +'<div class="ticket"><div class="weekbar">'
+  + [1,2,3,4,5,6,7].map(function(i){
+      var w=a.week[i],dot='<div class="dot"></div>';
+      if(w)dot='<div class="dot '+(w.hold&&w.bought?'both':(w.hold?'hold':'bought'))+'">'+(w.hold&&!w.bought?'✊':(w.bought?'💸':''))+'</div>';
+      return '<div class="d'+(String(i)===tk?' today':'')+'"><b>'+'一二三四五六日'[i-1]+'</b>'+dot+'</div>';
+    }).join('')
+  +'</div></div>'
+  +'<div class="ticket" style="margin-top:14px">'
+  +  '<div class="h2">急救不了?换一种玩法</div>'
+  +  '<div class="note" style="margin:6px 0 10px">把决定权交给朋友:让 TA 们预言你 7 天后会不会后悔。到时候开奖,打脸或真香,都算数。</div>'
+  +  '<div class="btn sm pu" data-act="goCreate">🔮 直接发起预言</div>'
+  +'</div>'
+  +'<div class="note" style="text-align:center;margin-top:14px">'+BRAND.disc+' · 急救数据仅保存在本机</div>';
+  $('#s-aid').innerHTML=html;};
+
+/* ---- aid flow ---- */
+var aidCtx={step:'',item:'',price:0};
+function aidStart(){aidCtx={step:'breath',item:'',price:0};go('s-aidflow',renderAidFlow);}
+function renderAidFlow(){
+  if(aidCtx.step==='breath'){
+    $('#s-aidflow').innerHTML=
+       '<div class="backbtn" data-act="aidQuit">← 不急了,退出</div>'
+      +'<div class="h1" style="text-align:center;margin-top:8px">先呼吸 6 秒</div>'
+      +'<div class="note" style="text-align:center">吸气 3 秒 · 呼气 3 秒 · 放松演示,非医疗建议</div>'
+      +'<div class="breathwrap" id="breathRing" style="--p:0"><div class="breathball"><b id="bnum">6</b><i id="blab">吸气</i></div></div>'
+      +'<div style="text-align:center;margin-top:10px"><span class="btn ghost sm" data-act="aidSkip" style="display:inline-block">跳过 · 我真的很急 →</span></div>';
+    runBreath();
+  }else if(aidCtx.step==='amount'){
+    $('#s-aidflow').innerHTML=
+       '<div class="backbtn" data-act="aidQuit">← 退出</div>'
+      +'<div class="h1">深呼吸结束。<br>现在,写下来。</div>'
+      +'<div style="margin-top:16px">'
+      +'<div class="field"><label>你想买什么(可不填)</label><input id="aidItem" maxlength="24" placeholder="例:夜间打车回家 / 新键盘"></div>'
+      +'<div class="field"><label>价格(必填)</label><input id="aidPrice" type="number" min="1" inputmode="decimal" placeholder="想花多少钱?"></div>'
+      +'<div class="btn pu" data-act="aidConvert">做清醒换算 →</div>'
+      +'</div>';
+  }else if(aidCtx.step==='convert'){
+    var s=state.settings,pr=aidCtx.price;
+    var hrs=pr/(s.salary/174),tea=pr/s.tea,rent=pr/s.rentDay;
+    var copy=pr<20?'一杯奶茶的价格,灵魂却做了三次斗争。别让它得逞。'
+      :pr<100?'这笔钱不大,但钱包就是从这种地方开始漏风的。'
+      :pr<500?'冷静。这是你 '+Math.round(hrs)+' 个小时的班换来的,别一次清零。'
+      :'大额警报:这不是消费,这是资产转移。先让它冷静 7 天。';
+    $('#s-aidflow').innerHTML=
+       '<div class="backbtn" data-act="aidBack">← 改金额</div>'
+      +'<div class="h1">清醒换算</div>'
+      +'<div class="note" style="margin:5px 0 14px">'+esc(aidCtx.item||'想买的东西')+' · <span class="num" style="color:var(--purple)">'+money(pr)+'</span>(按你设置的月薪 ¥'+state.settings.salary+' 换算)</div>'
+      +'<div class="convert">'
+      +'<div class="cbox"><span class="k">等于你的工时</span><span class="v">'+(hrs<10?hrs.toFixed(1):Math.round(hrs))+' 小时</span></div>'
+      +'<div class="cbox"><span class="k">等于奶茶</span><span class="v">'+(tea<10?tea.toFixed(1):Math.round(tea))+' 杯</span></div>'
+      +'<div class="cbox"><span class="k">等于房租</span><span class="v">'+(rent<10?rent.toFixed(1):Math.round(rent))+' 天</span></div>'
+      +'</div>'
+      +'<div class="zacopy">'+copy+'</div>'
+      +'<div style="margin-top:18px" class="h2">三个出口,选一个:</div>'
+      +'<div style="margin-top:9px">'
+      +'<div class="btn ne" data-act="aidHold" style="margin-bottom:10px">✊ 按住了,放进冷静清单</div>'
+      +'<div class="btn pu" data-act="aidPredict" style="margin-bottom:10px">🔮 让朋友预言:7 天后我会不会后悔</div>'
+      +'<div class="btn" data-act="aidBought">💸 我还是买了</div>'
+      +'</div>'
+      +'<div class="note" style="margin-top:10px">选「买了」不羞辱你:只记录,不清空连续天数,还会顺手帮你发起预言验证。</div>';
+  }
+}
+var breathT=null;
+function runBreath(){var n=6;clearInterval(breathT);
+  var setP=function(p){var r=$('#breathRing');if(r)r.style.setProperty('--p',p);};
+  setP(0);
+  breathT=setInterval(function(){
+    n--;var bn=$('#bnum'),bl=$('#blab'),r=$('#breathRing');
+    if(!bn){clearInterval(breathT);return;}
+    if(n<=0){clearInterval(breathT);aidCtx.step='amount';renderAidFlow();return;}
+    bn.textContent=n;bl.textContent=(n>3?'吸气':'呼气');
+    setP((6-n)/6*100);
+  },1000);}
+function aidQuit(){clearInterval(breathT);go('s-aid',function(){rerender();});}
+function aidReadPrice(){var v=parseFloat(($('#aidPrice')||{}).value||'0');
+  if(!(v>0)){var f=$('#aidPrice');if(f){f.classList.add('shake');setTimeout(function(){f.classList.remove('shake');},420);}toast('先写一个金额,换算才有杀伤力');return 0;}
+  return Math.min(Math.round(v),999999);}
+function aidConvert(){var v=aidReadPrice();if(!v)return;
+  aidCtx.price=v;aidCtx.item=clean(($('#aidItem')||{}).value||'').trim();
+  aidCtx.step='convert';renderAidFlow();}
+function aidBack(){aidCtx.step='amount';renderAidFlow();}
+function recordAid(type,amt){var a=state.aid;touchStreak();
+  var t=todayStr();if(!a.today||a.today.date!==t)a.today={date:t,amt:0};
+  var w=weekRecord();
+  if(type==='hold'){a.saved+=amt;a.hold++;a.today.amt+=amt;w.amt+=amt;w.hold=1;}
+  else{a.bought++;w.bought=1;}
+  saveState();}
+function aidHold(){recordAid('hold',aidCtx.price);aidCtx.kind='hold';go('s-aidcard',function(){rerender();});}
+function aidBought(){recordAid('bought',aidCtx.price);aidCtx.kind='bought';go('s-aidcard',function(){rerender();});}
+function aidPredict(){clearInterval(breathT);createCtx={item:aidCtx.item,price:aidCtx.price,reason:'',mine:-1,from:'aid'};
+  go('s-create',renderCreate);}
+RENDER['s-aidcard']=function(){var a=state.aid,pr=aidCtx.price,item=aidCtx.item||'想买的东西';
+  if(aidCtx.kind==='hold'){
+    $('#s-aidcard').innerHTML=
+       '<div class="hazard"></div>'
+      +'<div class="h1" style="margin:16px 0 12px">劫后余生卡</div>'
+      +'<div class="ticket cut" style="text-align:center;padding:22px 16px">'
+      +  '<div class="note">今天,你从冲动手里救回了</div>'
+      +  '<div class="num" style="font-size:44px;color:var(--red);margin:8px 0">'+money(pr)+'</div>'
+      +  '<div class="row" style="justify-content:center;gap:16px;margin-top:6px">'
+      +    '<span class="tag ne">连续急救 '+a.streak+' 天</span><span class="tag">累计救回 '+money(a.saved)+'</span>'
+      +  '</div>'
+      +  '<div class="divider"></div>'
+      +  '<div style="font-size:13.5px;line-height:1.8">「你不是想买它,<br>你只是现在需要一个出口。」</div>'
+      +  '<div style="margin-top:16px" class="stamp ink stampdrop"><b>按住</b><i>SELF-RESCUE</i></div>'
+      +'</div>'
+      +'<div style="margin-top:14px">'
+      +  '<div class="btn sm" data-act="saveShot">📸 保存卡片(生成图片)</div>'
+      +  '<div class="btn sm pu" data-act="aidHome" style="margin-top:10px">回急救站 · 明天 20:00 开饭</div>'
+      +'</div>'
+      +'<div class="note" style="text-align:center;margin-top:12px">冷静清单已记录 · '+BRAND.disc+'</div>';
+  }else{
+    $('#s-aidcard').innerHTML=
+       '<div class="hazard"></div>'
+      +'<div class="h1" style="margin:16px 0 12px">诚实卡</div>'
+      +'<div class="ticket" style="text-align:center;padding:22px 16px">'
+      +  '<div class="note">本次急救用时 1 分 06 秒 · 结果:</div>'
+      +  '<div style="font-family:var(--serif);font-size:30px;font-weight:900;margin:10px 0">买了就买了。</div>'
+      +  '<div class="row" style="justify-content:center;gap:16px">'
+      +    '<span class="tag rd">支出 '+money(pr)+'</span><span class="tag">连续 '+a.streak+' 天 · 不清零</span>'
+      +  '</div>'
+      +  '<div class="divider"></div>'
+      +  '<div style="font-size:13.5px;line-height:1.8">「不羞辱,只记录。<br>但敢不敢让朋友预言:7 天后你会不会后悔?」</div>'
+      +'</div>'
+      +'<div style="margin-top:14px">'
+      +  '<div class="btn pu" data-act="boughtPredict">🔮 发起 7 天后悔预言</div>'
+      +  '<div class="btn sm" data-act="aidHome" style="margin-top:10px">算了,回急救站</div>'
+      +'</div>'
+      +'<div class="note" style="text-align:center;margin-top:12px">'+BRAND.disc+'</div>';
+  }};
+function aidHome(){go('s-aid',function(){rerender();});}
+function boughtPredict(){createCtx={item:aidCtx.item,price:aidCtx.price,reason:'',mine:-1,from:'bought'};go('s-create',renderCreate);}
+
+/* ================= tab2 预言机大厅 ================= */
+RENDER['s-hall']=function(){
+  var preds=state.preds.slice().sort(function(a,b){return b.createdAt-a.createdAt;});
+  var openN=preds.filter(function(p){return p.status==='open';}).length;
+  var doneN=preds.length-openN;
+  var html=''
+  +'<div class="row" style="justify-content:space-between"><span class="h1">预言机 <span class="tag pu">7天后见</span></span></div>'
+  +'<div class="note" style="margin:6px 0 10px">'+BRAND.tagline+'</div>'
+  +'<div class="marquee"><span>演示数据 · 本周全站预言进行中 328 场 · 最准预言家命中率 92% · 昨日打脸 47 张 · 真香 12 张 · 以上为演示样本,上线首日为真实计数</span></div>'
+  +'<div style="margin:14px 0" class="btn pu" data-act="goCreate">🔮 发起一个 7 天预言</div>'
+  +'<div class="section-t"><span class="h2">预言大厅</span><span class="note">进行中 '+openN+' · 已开奖 '+doneN+'</span></div>';
+  if(!preds.length){
+    html+='<div class="empty"><div class="big">🔮</div>还没有预言。<br>想买什么,先让朋友预言一下?</div>';
+  }else{
+    preds.forEach(function(p){
+      var due=p.status==='open'&&Date.now()>=p.deadline;
+      var right=p.status==='done'
+        ?'<span class="tag '+(p.result.bought?(p.result.regret?'rd':'ye'):'ne')+'">'+(p.result.bought?(p.result.regret?'已打脸':'真香'):'守住了')+'</span>'
+        :(due?'<span class="tag rd">待揭晓</span>':'<span class="tag">进行中</span>');
+      html+='<div class="pred-item" data-act="openPred" data-id="'+p.id+'">'
+        +'<div class="face">'+(p.status==='done'?(p.result.bought&&p.result.regret?'🤡':(p.result.bought?'😋':'🛡️')):'⏳')+'</div>'
+        +'<div class="body ticket" style="box-shadow:3px 3px 0 var(--ink)">'
+        +  '<div class="t"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.item)+'</span><span class="p">'+money(p.price)+'</span></div>'
+        +  '<div class="sub"><span>'+(p.status==='open'?'<span class="cd" data-dl="'+p.deadline+'">'+cdText(p.deadline)+'</span> · '+p.votes.length+' 票':(p.result.bought&&p.result.regret?'预言家 '+hitCount(p)+'/'+p.votes.length+' 命中':'你赢了预言家'))+' '+(p.demo?'<span class="tag" style="font-size:9px;padding:1px 6px">演示</span>':'')+'</span>'+right+'</div>'
+        +'</div></div>';
+    });
+  }
+  html+='<div class="note" style="text-align:center;margin-top:14px">开奖前可一键提醒 · 分享零奖励 · '+BRAND.disc+'</div>';
+  $('#s-hall').innerHTML=html;};
+
+function hitCount(p){var r=p.result;if(!r)return 0;
+  return p.votes.filter(function(v){return judgeHit(v.choice,r.bought,r.regret);}).length;}
+function judgeHit(c,bought,regret){
+  if(c===0)return bought&&regret;
+  if(c===1)return !bought||(bought&&!regret);
+  return !bought;}
+
+/* ================= create ================= */
+var createCtx={item:'',price:0,reason:'',mine:-1,from:'hall'};
+function goCreate(){createCtx={item:'',price:0,reason:'',mine:-1,from:'hall'};go('s-create',renderCreate);}
+function renderCreate(){
+  $('#s-create').innerHTML=
+   '<div class="backbtn" data-act="createBack">← 返回</div>'
+  +'<div class="h1">立一份 7 天预言</div>'
+  +'<div class="note" style="margin:6px 0 14px">写清楚想买什么。朋友们会预言:7 天后你会不会后悔。</div>'
+  +'<div class="ticket">'
+  +'<div class="field"><label>想买的东西(必填)</label><input id="cItem" maxlength="24" placeholder="不填的话,就叫「一个还没想清楚的东西」" value="'+esc(createCtx.item)+'"></div>'
+  +'<div class="field"><label>价格</label><input id="cPrice" type="number" min="1" inputmode="decimal" placeholder="¥ 多少钱?" value="'+(createCtx.price||'')+'"></div>'
+  +'<div class="field"><label>购买理由(选一个,或自己写)</label>'
+  +  CHIPS.map(function(c){return '<span class="chip ne'+(createCtx.reason===c?' on':'')+'" data-act="pickReason" data-v="'+esc(c)+'">'+esc(c)+'</span>';}).join('')
+  +  '<input id="cReason" maxlength="40" placeholder="自定义理由,40 字以内" value="'+(createCtx.reason&&(CHIPS.indexOf(createCtx.reason)<0)?esc(createCtx.reason):'')+'">'
+  +'</div>'
+  +'<div class="field"><label>你自己押哪个?(必选 · 开奖时一起验证)</label>'
+  +'<div class="hero-choices">'
+  +  [0,1,2].map(function(c){return '<div class="hero'+(createCtx.mine===c?' on':'')+'" data-act="pickMine" data-v="'+c+'"><div class="e">'+['😱','😌','🚫'][c]+'</div><div class="t">'+choiceTag(c)+'</div></div>';}).join('')
+  +'</div></div>'
+  +'<div class="btn pu" data-act="makePred">🔮 生成预言卡,让朋友开票</div>'
+  +'<div class="note" style="margin-top:9px">无押注 · 无积分 · 分享零奖励 · 结果只判「后悔 / 不后悔」,仅供娱乐</div>'
+  +'</div>';}
+function pickReason(v){createCtx.reason=v;renderCreate();}
+function pickMine(v){createCtx.mine=+v;renderCreate();}
+function createBack(){go(createCtx.from==='aid'||createCtx.from==='bought'?'s-aidflow':'s-hall',function(){if(createCtx.from!=='hall'&&aidCtx.step)renderAidFlow();});}
+function makePred(){
+  var item=clean(($('#cItem')||{}).value||'').trim()||'一个还没想清楚的东西';
+  var price=parseFloat(($('#cPrice')||{}).value||'0');
+  var custom=clean(($('#cReason')||{}).value||'').trim().slice(0,40);
+  var reason=custom||createCtx.reason||'';
+  if(createCtx.mine<0){var heroes=$$('.hero-choices .hero',$('#s-create'));if(heroes.length){heroes.forEach(function(h){h.classList.add('shake');});setTimeout(function(){heroes.forEach(function(h){h.classList.remove('shake');});},420);}toast('先押一个你自己的预测');return;}
+  if(!(price>0)){var f=$('#cPrice');f.classList.add('shake');setTimeout(function(){f.classList.remove('shake');},420);toast('写个价格,预言才有分量');return;}
+  var t=Date.now();
+  var p={id:'NO.'+String(t).slice(-6),item:item,price:Math.min(Math.round(price),999999),
+    reason:reason,mine:createCtx.mine,createdAt:t,deadline:t+86400e3*7,ffwd:false,
+    status:'open',demo:false,votes:[],result:null};
+  state.preds.push(p);saveState();curPred=p.id;
+  go('s-card',function(){rerender();});}
+var curPred=null;
+function getPred(id){return state.preds.filter(function(p){return p.id===id;})[0];}
+
+/* ================= 预言卡(分享) ================= */
+function bandHtml(color,title,en){return '<div class="band" style="background:'+color+'"><span class="bn">'+title+'</span><span class="be">'+en+'</span></div>';}
+function cardHtml(p){
+  var votes=p.votes||[],n0=votes.filter(function(v){return v.choice===0;}).length,
+      n1=votes.filter(function(v){return v.choice===1;}).length,
+      n2=votes.filter(function(v){return v.choice===2;}).length;
+  return '<div id="shareCard">'
+  +bandHtml('linear-gradient(135deg,#4B2694,#6C3BD1)',BRAND.name,'7-DAY PREDICTION')
+  +'<div class="cbody">'
+  +  '<div class="note" style="display:flex;justify-content:space-between"><span>'+p.id+' · 已封存</span><span class="num">OPEN: '+fmtDate(p.deadline)+'</span></div>'
+  +  '<div class="sc-item" style="margin-top:9px">'+esc(p.item)+'</div>'
+  +  '<div class="sc-price">'+money(p.price)+'</div>'
+  +  (p.reason?'<div class="sc-quote">「'+esc(p.reason)+'」</div>':'')
+  +  '<div class="opts3">'
+  +    '<div class="o"><b>😱 会后悔</b><span class="n">'+n0+'</span></div>'
+  +    '<div class="o"><b>😌 不会后悔</b><span class="n">'+n1+'</span></div>'
+  +    '<div class="o"><b>🚫 根本不会买</b><span class="n">'+n2+'</span></div>'
+  +  '</div>'
+  +  '<div class="note" style="margin-top:10px;text-align:center">'+(p.status==='open'?'已收 '+votes.length+' 票 · 7 天后开奖':'已开奖')+' · 无押注无积分</div>'
+  +'</div>'
+  +'<div class="sc-foot"><div class="l">搜索「'+BRAND.name+'」,来当预言家<br>'+BRAND.disc+' · 无二维码</div>'
+  +  '<div class="barcode">'+Array.apply(null,Array(22)).map(function(){return '<i'+(Math.random()>.6?' class="w"':'')+'></i>';}).join('')+'</div></div>'
+  +'</div>';}
+RENDER['s-card']=function(){var p=getPred(curPred);if(!p){go('s-hall');return;}
+  $('#s-card').innerHTML=
+   '<div class="backbtn" data-act="cardBack">← 返回</div>'
+  +'<div class="h1" style="margin-bottom:4px">预言卡已封存</div>'
+  +'<div class="note" style="margin-bottom:12px">把它发到群里,让朋友们预言你的 7 天后。卡片可直接保存成图片。</div>'
+  +cardHtml(p)
+  +'<div style="margin-top:14px">'
+  +'<div class="btn pu" data-act="saveCard">📸 保存卡片(生成图片)</div>'
+  +'<div class="row" style="margin-top:10px;gap:10px">'
+  +  '<div class="btn sm" style="flex:1" data-act="copyShare">📋 复制群发话术</div>'
+  +  '<div class="btn sm" style="flex:1" data-act="goVote">🎭 好友视角试投</div>'
+  +'</div>'
+  +'<div class="btn sm ghost" data-act="openPred" data-id="'+p.id+'" style="margin-top:10px">查看预言详情 →</div>'
+  +'</div>'
+  +'<div class="note" style="text-align:center;margin-top:12px">分享不带任何奖励 · 到期提醒需你主动订阅(演示)</div>';}
+function cardBack(){go('s-hall',function(){rerender();});}
+function copyShare(){var p=getPred(curPred);
+  var t='我在「消费预言机」立了 7 天预言:'+p.item+' '+money(p.price)+'。来预言我 7 天后会不会后悔,开奖见分晓 🔮';
+  try{navigator.clipboard.writeText(t);toast('话术已复制,去群里粘贴');}
+  catch(e){toast('复制受限,长按这条:'+t);}}
+
+/* ================= 好友视角投票 ================= */
+RENDER['s-vote']=function(){var p=getPred(curPred);if(!p){go('s-hall');return;}
+  var used=p.votes.map(function(v){return v.name;});
+  var left=FACES.filter(function(f){return used.indexOf(f.n)<0;});
+  var pick=left.length?left[Math.floor(Math.random()*left.length)]:{n:'匿名网友',e:'🕶️'};
+  $('#s-vote').innerHTML=
+   '<div class="backbtn" data-act="voteBack">← 返回预言卡</div>'
+  +'<div class="row" style="justify-content:space-between"><span class="h1">好友视角</span><span class="tag ye">PREVIEW · 演示</span></div>'
+  +'<div class="note" style="margin:6px 0 12px">假设你收到了 TA 的预言卡。你会怎么说?(3 秒一票,不署名可换人)</div>'
+  +'<div class="ticket" style="margin-bottom:12px">'
+  +  '<div class="row"><span style="font-size:26px">'+pick.e+'</span><div><div style="font-weight:800;font-size:14px">'+pick.n+' 正在预言…</div><div class="note">'+esc(p.item)+' · '+money(p.price)+'</div></div></div>'
+  +  '<div class="divider"></div>'
+  +  '<div class="hero-choices" style="margin:0">'
+  +    [0,1,2].map(function(c){return '<div class="hero" data-act="castVote" data-v="'+c+'" data-name="'+pick.n+'" data-face="'+pick.e+'"><div class="e">'+['😱','😌','🚫'][c]+'</div><div class="t">'+choiceTag(c)+'</div></div>';}).join('')
+  +  '</div>'
+  +  '<div class="section-t" style="margin:12px 0 8px"><span class="h2" style="font-size:14px">补一句毒舌(选填)</span></div>'
+  +  SASS.slice(0,4).map(function(s){return '<span class="chip" data-act="voteSass" data-v="'+esc(s)+'">'+esc(s)+'</span>';}).join('')
+  +'</div>'
+  +'<div class="btn" data-act="simFriends">⚡ 一键模拟 3 位好友投票(演示)</div>'
+  +'<div class="note" style="text-align:center;margin-top:12px">先投票才能看别人的理由 · 防从众设计 · '+BRAND.disc+'</div>';}
+var voteSass='';
+function voteBack(){go('s-card',function(){rerender();});}
+function castVote(v,name,face){var p=getPred(curPred);if(!p)return;
+  var reason=voteSass||SASS[Math.floor(Math.random()*SASS.length)];
+  p.votes.push({name:name,face:face,choice:+v,reason:reason});voteSass='';
+  saveState();toast('预言已封存 · 现在可以看到别人的理由了');
+  go('s-card',function(){rerender();});}
+function voteSassPick(v){voteSass=voteSass===v?'':v;$$('.chip',$('#s-vote')).forEach(function(c){
+  c.classList.toggle('on',c.getAttribute('data-v')===voteSass);});}
+function simFriends(){var p=getPred(curPred);if(!p)return;
+  var used=p.votes.map(function(v){return v.name;});
+  var left=FACES.filter(function(f){return used.indexOf(f.n)<0;});
+  if(!left.length){toast('好友都投过了(演示);可发起新预言');return;}
+  var n=Math.min(3,left.length),bag=[0,0,0,1,1,2];
+  for(var i=0;i<n;i++){var f=left.splice(Math.floor(Math.random()*left.length),1)[0];
+    p.votes.push({name:f.n,face:f.e,choice:bag[Math.floor(Math.random()*bag.length)],
+      reason:SASS[Math.floor(Math.random()*SASS.length)]});}
+  saveState();toast('已模拟 '+n+' 位好友投票(演示)');go('s-card',function(){rerender();});}
+
+/* ================= 详情 ================= */
+RENDER['s-detail']=function(){var p=getPred(curPred);if(!p){go('s-hall');return;}
+  var votes=p.votes,n0=votes.filter(function(v){return v.choice===0;}).length,
+      n1=votes.filter(function(v){return v.choice===1;}).length,n2=votes.filter(function(v){return v.choice===2;}).length,
+      tot=Math.max(votes.length,1);
+  var due=Date.now()>=p.deadline;
+  var mineHtml='<span class="tag pu">我押: '+choiceTag(p.mine)+'</span>';
+  var html=''
+  +'<div class="backbtn" data-act="detailBack">← 预言大厅</div>'
+  +'<div class="ticket" style="margin-bottom:13px">'
+  +  '<div class="row" style="justify-content:space-between"><span class="tag">'+p.id+'</span>'+(p.demo?'<span class="tag" style="font-size:9px;padding:1px 6px">演示数据</span>':'')+'</div>'
+  +  '<div class="sc-item" style="margin-top:8px">'+esc(p.item)+'</div>'
+  +  '<div class="row" style="justify-content:space-between;align-items:baseline;margin-top:2px"><span class="sc-price">'+money(p.price)+'</span>'+mineHtml+'</div>'
+  +  (p.reason?'<div class="sc-quote">「'+esc(p.reason)+'」</div>':'')
+  +'</div>';
+  if(p.status==='open'){
+    html+='<div class="ticket" style="text-align:center;margin-bottom:13px">'
+    +  '<div class="note">距开奖</div><div class="bigcd cd" data-dl="'+p.deadline+'">'+cdText(p.deadline)+'</div>'
+    +  '<div class="note">开奖时间 '+fmtDate(p.deadline)+'</div>'
+    +  '<div class="row" style="margin-top:12px;gap:10px">'
+    +    '<div class="btn sm" style="flex:1" data-act="remindMe">🔔 到期提醒我(演示)</div>'
+    +    (due?'<div class="btn sm rd" style="flex:1" data-act="goReveal">🏆 去揭晓</div>'
+              :'<div class="btn sm ye" style="flex:1" data-act="ffwd">⏩ 快进 7 天(演示)</div>')
+    +  '</div></div>';
+  }else{
+    var r=p.result;
+    html+='<div class="ticket" style="text-align:center;margin-bottom:13px">'
+    +  '<div class="h2">已开奖 · '+(r.bought&&r.regret?'打脸':(r.bought?'真香':'守住了'))+'</div>'
+    +  '<div class="note" style="margin-top:5px">'+hitCount(p)+'/'+votes.length+' 位预言家命中</div>'
+    +  '<div class="btn sm pu" style="margin-top:10px;display:block" data-act="goReveal">查看开奖结果卡 →</div></div>';
+  }
+  html+='<div class="section-t"><span class="h2">票型</span><span class="note">'+votes.length+' 位预言家</span></div>'
+  +'<div class="bar" style="margin-bottom:6px">'
+  +  '<i style="width:'+(n0/tot*100)+'%;background:var(--red)"></i><i style="width:'+(n1/tot*100)+'%;background:var(--neon)"></i><i style="width:'+(n2/tot*100)+'%;background:var(--purple)"></i>'
+  +'</div>'
+  +'<div class="row note" style="justify-content:space-between;margin-bottom:12px"><span>😱 会后悔 <b class="num">'+n0+'</b></span><span>😌 不会 <b class="num">'+n1+'</b></span><span>🚫 不买 <b class="num">'+n2+'</b></span></div>'
+  +'<div class="section-t"><span class="h2">神预言墙</span><span class="note">先投票才解锁(已解锁)</span></div>';
+  if(!votes.length)html+='<div class="empty"><div class="big">🗳️</div>还没有预言家投票。<br>把预言卡发到群里,或去「好友视角试投」。</div>';
+  votes.forEach(function(v){html+='<div class="voteline"><span class="f">'+v.face+'</span><span class="who">'+esc(v.name)+'</span><span class="say">「'+esc(v.reason)+'」</span><span class="vtag '+choiceCls(v.choice)+'">'+choiceTag(v.choice)+'</span></div>';});
+  html+='<div style="margin-top:14px;display:block">'
+  +  '<div class="btn sm" data-act="saveCard">📸 保存预言卡</div>'
+  +  '<div class="btn sm ghost" data-act="goVote" style="margin-top:10px">🎭 好友视角试投(演示)</div>'
+  +'</div>'
+  +'<div class="note" style="text-align:center;margin-top:12px">'+BRAND.disc+'</div>';
+  $('#s-detail').innerHTML=html;};
+function detailBack(){go('s-hall',function(){rerender();});}
+function openPred(id){curPred=id;go('s-detail',function(){rerender();});}
+function remindMe(){toast('已设置:开奖前 2 小时提醒(演示,正式版为订阅消息)');}
+function ffwd(){var p=getPred(curPred);if(!p)return;
+  p.deadline=Date.now()-1;p.ffwd=true;saveState();
+  toast('已快进到开奖(演示)');go('s-detail',function(){rerender();});}
+
+/* ================= 揭晓 ================= */
+RENDER['s-reveal']=function(){var p=getPred(curPred);if(!p){go('s-hall');return;}
+  if(p.status==='done'){renderVerdict(p);return;}
+  if(Date.now()<p.deadline&&!p.ffwd){go('s-detail',function(){rerender();});return;}
+  revealCtx={bought:-1,regret:-1};
+  $('#s-reveal').innerHTML=
+   '<div class="backbtn" data-act="revealBack">← 预言详情</div>'
+  +'<div class="h1" style="margin-bottom:4px">开奖时刻</div>'
+  +'<div class="note" style="margin-bottom:12px">只判「后悔 / 不后悔」,不上传任何凭证。诚实开,预言才有意思。</div>'
+  +'<div class="ticket">'
+  +  '<div class="note">Q1 · 7 天到了,你买了吗?</div>'
+  +  '<div class="hero-choices" style="margin-top:8px">'
+  +    '<div class="hero" data-act="rvBought" data-v="1"><div class="e">💸</div><div class="t">买了</div></div>'
+  +    '<div class="hero" data-act="rvBought" data-v="0"><div class="e">🛡️</div><div class="t">没买</div></div>'
+  +  '</div>'
+  +  '<div id="rvRegret"></div>'
+  +  '<div class="btn pu" data-act="doReveal" style="margin-top:4px">🔮 开奖,看预言家们对不对</div>'
+  +'</div>'
+  +'<div class="note" style="text-align:center;margin-top:12px">'+BRAND.disc+'</div>';}
+var revealCtx={bought:-1,regret:-1};
+function revealBack(){go('s-detail',function(){rerender();});}
+function rvBought(v){revealCtx.bought=+v;renderRevealRegret();}
+function renderRevealRegret(){var box=$('#rvRegret');if(!box)return;
+  if(revealCtx.bought===1){
+    box.innerHTML='<div class="note" style="margin:12px 0 4px">Q2 · 买了之后,后悔吗?</div>'
+    +'<div class="hero-choices" style="margin-top:4px">'
+    +'<div class="hero'+(revealCtx.regret===1?' on':'')+'" data-act="rvRegret" data-v="1"><div class="e">😞</div><div class="t">后悔了</div></div>'
+    +'<div class="hero'+(revealCtx.regret===0?' on':'')+'" data-act="rvRegret" data-v="0"><div class="e">😋</div><div class="t">不后悔</div></div>'
+    +'</div>';
+  }else{box.innerHTML='';revealCtx.regret=-1;}}
+function rvRegret(v){revealCtx.regret=+v;renderRevealRegret();}
+function doReveal(){var p=getPred(curPred);if(!p)return;
+  if(revealCtx.bought<0){toast('先回答:买了吗?');return;}
+  if(revealCtx.bought===1&&revealCtx.regret<0){toast('买了的话,回答一下后不后悔');return;}
+  p.result={bought:revealCtx.bought===1,regret:revealCtx.regret===1};
+  p.status='done';saveState();
+  $('#curdiv').classList.remove('run');void $('#curdiv').offsetWidth;$('#curdiv').classList.add('run');
+  go('s-reveal',function(){renderVerdict(p);});}
+function verdictKind(p){var r=p.result;
+  return r.bought&&r.regret?'face':(r.bought?'xiang':'hold');}
+function renderVerdict(p){
+  var r=p.result,hits=hitCount(p),tot=p.votes.length,miss=tot-hits;
+  var kind=verdictKind(p);
+  var meta={
+    face:{t:'打脸卡',e:'🤡',st:'应验',bg:'linear-gradient(135deg,#B31F1F,#D62828)',
+      line:hits+' 位预言家说你会后悔 · 你买了 · 你真的后悔了',
+      sub:'「7 天前的你,被朋友们看穿了。」下次开预言,请他们喝奶茶。'},
+    xiang:{t:'真香卡',e:'😋',st:'翻车',bg:'linear-gradient(135deg,#3C7A00,#69A81C)',
+      line:miss+' 位预言家赌你后悔 · 你买了 · 还买得理直气壮',
+      sub:'「这次你赢了所有预言家。」快乐是真的,记得下不为例。'},
+    hold:{t:'守住了卡',e:'🛡️',st:'清醒',bg:'linear-gradient(135deg,#4B2694,#6C3BD1)',
+      line:tot+' 位预言家等着看你后悔 · 你根本没买',
+      sub:'「钱还在,预言家集体翻车。」7 天前那个想买的你,谢谢你没听 TA 的。'}
+  }[kind];
+  var topSay='';var hitVotes=p.votes.filter(function(v){return judgeHit(v.choice,r.bought,r.regret);});
+  if(hitVotes.length)topSay=hitVotes[0].reason;else if(p.votes.length)topSay=p.votes[0].reason;
+  var selfHit=judgeHit(p.mine,r.bought,r.regret);
+  var n0=p.votes.filter(function(v){return v.choice===0;}).length,
+      n1=p.votes.filter(function(v){return v.choice===1;}).length,
+      n2=p.votes.filter(function(v){return v.choice===2;}).length,totm=Math.max(tot,1);
+  $('#s-reveal').innerHTML=
+   '<div class="backbtn" data-act="revealBack">← 预言详情</div>'
+  +'<div id="shareCard"><div class="share-card">'
+  +  bandHtml(meta.bg,meta.t,meta.t==='打脸卡'?'CALLED IT':(meta.t==='真香卡'?'NO REGRETS':'SAVED'))
+  +  '<div class="cbody" style="text-align:center">'
+  +    '<div style="font-size:46px">'+meta.e+'</div>'
+  +    '<div class="stage-r" style="margin-top:8px;padding:16px 12px;box-shadow:none"><div class="vtitle">'+meta.t+'</div>'
+  +      '<div class="vline">'+esc(p.item)+' · '+money(p.price)+'<br>'+meta.line+'</div></div>'
+  +    (p.reason?'<div class="sc-quote" style="text-align:left">当时你说:「'+esc(p.reason)+'」</div>':'')
+  +    (topSay?'<div class="sc-quote" style="text-align:left;border-color:var(--red)">神预言:「'+esc(topSay)+'」</div>':'')
+  +    '<div class="opts3">'
+  +      '<div class="o"><b>😱 会后悔</b><span class="n">'+n0+'</span></div>'
+  +      '<div class="o"><b>😌 不会后悔</b><span class="n">'+n1+'</span></div>'
+  +      '<div class="o"><b>🚫 根本不会买</b><span class="n">'+n2+'</span></div>'
+  +    '</div>'
+  +    '<div class="row" style="justify-content:center;gap:12px;margin-top:12px">'
+  +      '<span class="tag '+(selfHit?'ne':'rd')+'">'+(selfHit?'你押对了,你最懂自己':'你押错了 · 最不懂的是自己')+'</span>'
+  +      '<span class="tag">预言家命中 '+hits+'/'+tot+'</span>'
+  +    '</div>'
+  +    '<div style="margin-top:14px" class="stamp '+(kind==='face'?'':'pu')+' stampdrop"><b>'+meta.st+'</b><i>VERDICT</i></div>'
+  +  '</div>'
+  +  '<div class="sc-foot"><div class="l">搜索「'+BRAND.name+'」,来当预言家<br>'+BRAND.disc+' · 无二维码</div>'
+  +    '<div class="barcode">'+Array.apply(null,Array(22)).map(function(){return '<i'+(Math.random()>.6?' class="w"':'')+'></i>';}).join('')+'</div></div>'
+  +'</div></div>'
+  +'<div style="margin-top:14px">'
+  +  '<div class="btn pu" data-act="saveCard">📸 保存'+meta.t+'(生成图片)</div>'
+  +  '<div class="row" style="gap:10px;margin-top:10px">'
+  +    '<div class="btn sm" style="flex:1" data-act="copyShare">📋 复制群发话术</div>'
+  +    '<div class="btn sm" style="flex:1" data-act="goCreate">🔮 再预言一件</div>'
+  +  '</div>'
+  +'</div>'
+  +'<div class="note" style="text-align:center;margin-top:12px">开奖不改变任何预言家数据以外的东西 · 分享零奖励</div>';}
+
+/* ================= tab3 预言家档案 ================= */
+function oracleStats(){
+  var done=state.preds.filter(function(p){return p.status==='done'&&p.result;});
+  var v=0,h=0,st=0,sh=0;var map={};
+  done.forEach(function(p){
+    p.votes.forEach(function(x){v++;
+      if(judgeHit(x.choice,p.result.bought,p.result.regret)){h++;if(!map[x.name])map[x.name]={v:0,h:0};map[x.name].v++;map[x.name].h++;}
+      else{if(!map[x.name])map[x.name]={v:0,h:0};map[x.name].v++;}
+    });
+    st++;if(judgeHit(p.mine,p.result.bought,p.result.regret))sh++;
+  });
+  var best=null,bh=0;
+  Object.keys(map).forEach(function(k){if(map[k].h>bh&&map[k].v>=1){bh=map[k].h;best={n:k,v:map[k].v,h:map[k].h};}});
+  var acc=v?h/v:0;
+  var title=acc>=.8?'赛博预言家':acc>=.6?'人间清醒':acc>=.4?'民间观察员':(v?'翻车体质':'新手上路');
+  return{v:v,h:h,acc:acc,st:st,sh:sh,title:title,best:best,done:done.length};}
+RENDER['s-me']=function(){var s=oracleStats(),a=state.aid;
+  var accPct=Math.round(s.acc*100);
+  var html=''
+  +'<div class="row" style="justify-content:space-between"><span class="h1">预言家档案</span><span class="tag">仅供娱乐</span></div>'
+  +'<div class="note" style="margin:6px 0 12px">预言家=投票的朋友们。TA 们的战绩,就是你的关系资产。</div>'
+  +'<div class="ticket cut">'
+  +  '<div class="row" style="gap:14px">'
+  +    '<div class="ring" style="background:conic-gradient(var(--purple) '+(accPct*3.6)+'deg,#e8e2d4 0)"><div class="rv"><b>'+accPct+'%</b><i>命中率</i></div></div>'
+  +    '<div style="flex:1">'
+  +      '<div class="h2" style="font-size:19px">「'+s.title+'」</div>'
+  +      '<div class="note" style="margin-top:5px">预言 '+s.st+' 场 · 朋友投票 '+s.v+' 次<br>命中 '+s.h+' 次 · 你押中自己 '+s.sh+'/'+s.st+' 次</div>'
+  +      '<div class="tag ye" style="margin-top:8px">'+(s.best?('最懂你的人: '+s.best.n+' ('+s.best.h+'/'+s.best.v+')'):'暂无预言家数据')+'</div>'
+  +    '</div>'
+  +    '<div class="stamp pu" style="width:64px;height:64px"><b style="font-size:14px;letter-spacing:1px">'+(accPct>=80?'封神':accPct>=60?'清醒':'观望')+'</b><i style="font-size:7px">ARCHIVE</i></div>'
+  +  '</div>'
+  +  '<div class="divider"></div>'
+  +  '<div class="row" style="gap:10px">'
+  +    '<div class="btn sm" style="flex:1" data-act="saveOracle">📸 保存预言家卡</div>'
+  +  '</div>'
+  +'</div>'
+  +'<div class="section-t"><span class="h2">急救战绩</span><span class="note">与预言机共用钱包</span></div>'
+  +'<div class="mini-stats">'
+  +  '<div class="ms"><b style="color:var(--red)">'+money(a.saved)+'</b><i>累计救回</i></div>'
+  +  '<div class="ms"><b>'+a.hold+'</b><i>按住次数</i></div>'
+  +  '<div class="ms"><b>'+(a.hold+a.bought?Math.round(a.hold/(a.hold+a.bought)*100):0)+'%</b><i>按住率</i></div>'
+  +  '<div class="ms"><b>'+a.streak+'</b><i>连续天数</i></div>'
+  +'</div>'
+  +'<div class="section-t"><span class="h2">清醒换算设置</span><span class="note">本机保存</span></div>'
+  +'<div class="ticket">'
+  +  '<div class="row" style="gap:10px">'
+  +    '<div class="field" style="flex:1;margin:0"><label>月薪 ¥</label><input id="setSalary" type="number" min="1" value="'+state.settings.salary+'"></div>'
+  +    '<div class="field" style="flex:1;margin:0"><label>奶茶 ¥/杯</label><input id="setTea" type="number" min="1" value="'+state.settings.tea+'"></div>'
+  +    '<div class="field" style="flex:1;margin:0"><label>房租 ¥/天</label><input id="setRent" type="number" min="1" value="'+state.settings.rentDay+'"></div>'
+  +  '</div>'
+  +  '<div class="btn sm" data-act="saveSettings" style="margin-top:11px">保存换算参数</div>'
+  +'</div>'
+  +'<div style="margin-top:16px;display:block">'
+  +  '<div class="btn sm ghost" data-act="clearDemo">🧹 清空演示样本</div>'
+  +'</div>'
+  +'<div class="note" style="text-align:center;margin-top:14px;line-height:1.8">预言/急救均无押注、无积分、无抽卡<br>数据仅保存在本机浏览器 · '+BRAND.disc+'</div>';
+  $('#s-me').innerHTML=html;};
+function saveSettings(){var s=state.settings;
+  var a=parseFloat(($('#setSalary')||{}).value||'0'),b=parseFloat(($('#setTea')||{}).value||'0'),c=parseFloat(($('#setRent')||{}).value||'0');
+  if(a>0)s.salary=Math.round(a);if(b>0)s.tea=Math.round(b);if(c>0)s.rentDay=Math.round(c);
+  saveState();toast('换算参数已保存');}
+function clearDemo(){state.preds=state.preds.filter(function(p){return !p.demo;});saveState();
+  toast('演示样本已清空');rerender();}
+
+/* ================= canvas 导出 ================= */
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);
+  c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function wrapText(c,text,x,y,maxW,lh){text=String(text);var line='',lines=[];
+  for(var i=0;i<text.length;i++){if(c.measureText(line+text[i]).width>maxW&&line){lines.push(line);line=text[i];}else line+=text[i];}
+  if(line)lines.push(line);lines.forEach(function(l,i){c.fillText(l,x,y+i*lh);});return lines.length;}
+function drawStamp(c,x,y,txt,color){c.save();c.translate(x,y);c.rotate(-13*Math.PI/180);
+  c.strokeStyle=color;c.lineWidth=6;c.beginPath();c.arc(0,0,66,0,Math.PI*2);c.stroke();
+  c.lineWidth=2.5;c.beginPath();c.arc(0,0,55,0,Math.PI*2);c.stroke();
+  c.fillStyle=color;c.font='900 34px "Songti SC","SimSun",serif';c.textAlign='center';c.textBaseline='middle';
+  c.fillText(txt,0,-6);c.font='11px "Consolas",monospace';c.fillText('VERDICT',0,26);c.restore();}
+function drawFoot(c,W,H){c.fillStyle='#8A857A';c.font='18px sans-serif';c.textAlign='left';
+  c.fillText('搜索「消费预言机」,来当预言家',44,H-64);
+  c.fillText('仅供娱乐 · 不构成任何建议 · 无二维码',44,H-38);
+  c.fillStyle='#151515';for(var i=0;i<32;i++){var bw=i%3===0?5:2.5;c.fillRect(W-206+i*4.6,H-84,bw,52);}}
+function frame(c,W,H,bandColor,title,en){
+  c.fillStyle='#F6F1E4';c.fillRect(0,0,W,H);
+  c.strokeStyle='#151515';c.lineWidth=8;c.strokeRect(18,18,W-36,H-36);
+  c.lineWidth=2.5;c.strokeRect(32,32,W-64,H-64);
+  var g=c.createLinearGradient(0,54,W,54);g.addColorStop(0,'#4B2694');g.addColorStop(1,bandColor);
+  c.fillStyle=g;c.fillRect(44,54,W-88,86);
+  c.fillStyle='#fff';c.font='900 42px "Songti SC","SimSun",serif';c.textAlign='left';c.textBaseline='alphabetic';
+  c.fillText(title,66,116);c.font='600 17px "Consolas",monospace';c.globalAlpha=.9;
+  c.textAlign='right';c.fillText(en,W-66,110);c.globalAlpha=1;}
+function exportCard(kind){
+  var W=780,H=1040;var cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  var c=cv.getContext('2d');c.textBaseline='alphabetic';
+  if(kind==='predict'){
+    var p=getPred(curPred);if(!p)return;
+    frame(c,W,H,'#6C3BD1',BRAND.name,'7-DAY PREDICTION');
+    c.fillStyle='#151515';c.font='24px sans-serif';c.textAlign='left';
+    c.fillText(p.id+' · 已封存',66,190);
+    c.textAlign='right';c.fillText('OPEN: '+fmtDate(p.deadline),W-66,190);
+    c.textAlign='left';c.font='900 52px "Songti SC","SimSun",serif';
+    var ln=wrapText(c,p.item,66,268,W-132,60);
+    c.font='800 76px "Bahnschrift","Consolas",sans-serif';c.fillStyle='#6C3BD1';
+    c.fillText(money(p.price),66,268+ln*60+78);
+    if(p.reason){c.fillStyle='#151515';c.font='28px sans-serif';
+      c.fillText('当时说:',66,268+ln*60+140);
+      c.font='30px sans-serif';c.fillStyle='#333';
+      wrapText(c,'「'+p.reason+'」',66,268+ln*60+184,W-132,44);}
+    var n=[0,0,0];p.votes.forEach(function(v){n[v.choice]++;});
+    c.font='900 30px "Songti SC","SimSun",serif';c.fillStyle='#151515';
+    c.fillText('预言分布 · 已收 '+p.votes.length+' 票',66,H-190);
+    var total=Math.max(p.votes.length,1),bx=66,bw=(W-132-24)/3;
+    [['会后悔',n[0],'#D62828'],['不会后悔',n[1],'#C8F31D'],['根本不会买',n[2],'#6C3BD1']].forEach(function(d,i){
+      var x=bx+i*(bw+12);c.fillStyle='#fff';c.strokeStyle='#151515';c.lineWidth=3;
+      c.fillRect(x,H-168,bw,74);c.strokeRect(x,H-168,bw,74);
+      c.fillStyle='#151515';c.font='24px sans-serif';c.textAlign='center';
+      c.fillText(d[0],x+bw/2,H-138);c.font='800 32px "Consolas",monospace';
+      c.fillStyle=d[2]==='#C8F31D'?'#3c7a00':d[2];c.fillText(d[1],x+bw/2,H-104);});
+    drawStamp(c,W-150,470,'封存','#6C3BD1');
+    drawFoot(c,W,H);
+  }else if(kind==='verdict'){
+    var p=getPred(curPred);if(!p||!p.result)return;
+    var kindV=verdictKind(p);
+    var meta={face:{t:'打脸卡',bg:'#D62828',st:'应验',en:'CALLED IT'},
+      xiang:{t:'真香卡',bg:'#69A81C',st:'翻车',en:'NO REGRETS'},
+      hold:{t:'守住了卡',bg:'#6C3BD1',st:'清醒',en:'SAVED'}}[kindV];
+    frame(c,W,H,meta.bg,meta.t,meta.en);
+    var r=p.result,hits=hitCount(p),tot=p.votes.length;
+    c.textAlign='center';c.font='140px sans-serif';c.fillStyle='#151515';
+    c.fillText(meta.t==='打脸卡'?'🤡':(meta.t==='真香卡'?'😋':'🛡️'),W/2,290);
+    c.font='900 64px "Songti SC","SimSun",serif';c.fillStyle=meta.bg==='#D62828'?'#B31F1F':(meta.bg==='#69A81C'?'#3C7A00':'#4B2694');
+    c.fillText(meta.t,W/2,392);
+    c.font='30px sans-serif';c.fillStyle='#333';
+    wrapText(c,esc(p.item)+' · '+money(p.price)+' · 预言家命中 '+hits+'/'+tot,W/2,446,W-200,42);
+    var hitVotes=p.votes.filter(function(v){return judgeHit(v.choice,r.bought,r.regret);});
+    var top=hitVotes.length?hitVotes[0].reason:(p.votes[0]?p.votes[0].reason:'');
+    if(top){c.textAlign='left';c.font='28px sans-serif';c.fillStyle='#151515';
+      c.fillText('神预言:',66,530);c.font='30px sans-serif';c.fillStyle='#333';
+      wrapText(c,'「'+top+'」',66,574,W-132,44);}
+    drawStamp(c,W-160,760,meta.st,meta.bg==='#69A81C'?'#3C7A00':meta.bg);
+    c.textAlign='left';c.font='900 30px "Songti SC","SimSun",serif';c.fillStyle='#151515';
+    c.fillText('7 天,一句预言,一场开奖。',66,H-160);
+    drawFoot(c,W,H);
+  }else if(kind==='saved'){
+    frame(c,W,H,'#D62828','劫后余生卡','SELF-RESCUE');
+    var a2=state.aid;
+    c.textAlign='center';c.fillStyle='#8A857A';c.font='26px sans-serif';
+    c.fillText('今天,你从冲动手里救回了',W/2,300);
+    c.font='800 110px "Bahnschrift","Consolas",sans-serif';c.fillStyle='#D62828';
+    c.fillText(money(aidCtx.price||0),W/2,430);
+    c.font='28px sans-serif';c.fillStyle='#151515';
+    c.fillText('连续急救 '+a2.streak+' 天 · 累计救回 '+money(a2.saved),W/2,505);
+    c.font='34px "Songti SC","SimSun",serif';c.fillStyle='#151515';
+    wrapText(c,'「你不是想买它,你只是现在需要一个出口。」',W/2,600,W-220,52);
+    drawStamp(c,W-160,800,'按住','#151515');
+    c.textAlign='left';c.font='900 30px "Songti SC","SimSun",serif';c.fillStyle='#151515';
+    c.fillText('冲动来了,先按 6 秒。',66,H-160);
+    drawFoot(c,W,H);
+  }else{
+    var s=oracleStats(),accPct=Math.round(s.acc*100);
+    frame(c,W,H,'#6C3BD1','预言家卡','ORACLE ARCHIVE');
+    c.beginPath();c.strokeStyle='#151515';c.lineWidth=3;
+    c.arc(W/2,330,110,0,Math.PI*2);c.stroke();
+    c.beginPath();c.strokeStyle='#6C3BD1';c.lineWidth=22;
+    c.arc(W/2,330,110,-Math.PI/2,-Math.PI/2+Math.PI*2*(s.acc||0));c.stroke();
+    c.textAlign='center';c.fillStyle='#151515';c.font='800 58px "Bahnschrift","Consolas",sans-serif';
+    c.fillText(accPct+'%',W/2,346);c.font='20px sans-serif';c.fillStyle='#8A857A';c.fillText('命中率',W/2,382);
+    c.font='900 54px "Songti SC","SimSun",serif';c.fillStyle='#151515';
+    c.fillText('「'+s.title+'」',W/2,520);
+    c.font='30px sans-serif';c.fillStyle='#333';
+    c.fillText('预言 '+s.st+' 场 · 朋友投票 '+s.v+' 次 · 命中 '+s.h+' 次',W/2,580);
+    if(s.best)c.fillText('最懂你的人: '+s.best.n+' ('+s.best.h+'/'+s.best.v+')',W/2,626);
+    drawStamp(c,W-160,800,s.acc>=.8?'封神':(s.acc>=.6?'清醒':'观望'),'#6C3BD1');
+    c.textAlign='left';c.font='900 30px "Songti SC","SimSun",serif';c.fillStyle='#151515';
+    c.fillText('朋友对你的判断,是关系资产。',66,H-160);
+    drawFoot(c,W,H);
+  }
+  showExport(cv);}
+function showExport(cv){
+  var url=cv.toDataURL('image/png');
+  var root=$('#modal-root');
+  root.innerHTML='<div class="modal" data-act="mClose"><div class="mbox" data-stop="1">'
+  +'<div class="row" style="justify-content:space-between;margin-bottom:10px"><span class="h2">卡片已生成</span><span class="tag ne">长按或下载</span></div>'
+  +'<img src="'+url+'" alt="分享卡">'
+  +'<div class="btn sm pu" data-act="dlPng" style="margin-top:12px">⬇️ 下载 PNG</div>'
+  +'<div class="note" style="margin-top:8px;text-align:center">小程序版将走 wx.canvasToTempFilePath + 相册授权</div>'
+  +'</div></div>';
+  root.querySelector('img').setAttribute('data-url',url);}
+function mClose(e){var t=(e&&e.target)?e.target:null;
+  if(t&&t.closest&&t.closest('[data-stop]'))return;
+  $('#modal-root').innerHTML='';}
+function dlPng(){var img=$('#modal-root img');if(!img)return;
+  var a=document.createElement('a');a.href=img.getAttribute('data-url');
+  a.download='oracle-card.png';document.body.appendChild(a);a.click();a.remove();
+  toast('已下载(浏览器);分享零奖励');}
+
+/* ================= tab & event wiring ================= */
+$$('#tabbar .tab').forEach(function(t){t.addEventListener('click',function(){
+  go(t.getAttribute('data-tab'),function(){rerender();});});});
+document.addEventListener('click',function(e){
+  if(!e||!e.target||!e.target.closest)return;
+  var closer=e.target.closest('[data-act]');
+  if(!closer)return;
+  var act=closer.getAttribute('data-act'),v=closer.getAttribute('data-v');
+  if(act==='mClose'){mClose(e);return;}
+  var acts={
+    aidStart:aidStart,aidQuit:aidQuit,aidSkip:function(){clearInterval(breathT);aidCtx.step='amount';renderAidFlow();},
+    aidConvert:aidConvert,aidBack:aidBack,aidHold:aidHold,aidBought:aidBought,aidPredict:aidPredict,
+    aidHome:aidHome,boughtPredict:boughtPredict,saveShot:function(){exportCard('saved');},
+    goCreate:goCreate,pickReason:function(){pickReason(v);},pickMine:function(){pickMine(v);},makePred:makePred,
+    cardBack:cardBack,saveCard:function(){exportCard(curPred&&getPred(curPred)&&getPred(curPred).status==='done'?'verdict':'predict');},
+    copyShare:copyShare,goVote:function(){go('s-vote',function(){rerender();});},voteBack:voteBack,
+    castVote:function(){castVote(v,closer.getAttribute('data-name'),closer.getAttribute('data-face'));},
+    voteSass:function(){voteSassPick(v);},simFriends:simFriends,
+    openPred:function(){openPred(closer.getAttribute('data-id'));},detailBack:detailBack,
+    remindMe:remindMe,ffwd:ffwd,goReveal:function(){go('s-reveal',function(){rerender();});},
+    revealBack:revealBack,rvBought:function(){rvBought(v);},rvRegret:function(){rvRegret(v);},doReveal:doReveal,
+    saveOracle:function(){exportCard('oracle');},saveSettings:saveSettings,clearDemo:clearDemo,
+    createBack:createBack,mClose:mClose,dlPng:dlPng
+  };
+  if(acts[act])acts[act](v,closer);
+});
+/* ================= countdown ticker ================= */
+setInterval(function(){
+  $$('.cd').forEach(function(el){var dl=+el.getAttribute('data-dl');
+    if(dl)el.textContent=cdText(dl);});
+},1000);
+
+/* ================= debug api & boot ================= */
+window.__oracle={state:function(){return state;},go:go,errors:window.__errors,exportCard:exportCard};
+go('s-aid',function(){rerender();});
+</script>
+</body>
+</html>
